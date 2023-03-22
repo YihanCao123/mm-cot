@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--data_root', type=str, default='data')
     parser.add_argument('--output_dir', type=str, default='experiments')
     parser.add_argument('--model', type=str, default='allenai/unifiedqa-t5-base')
-    parser.add_argument('--options', type=list, default=["A", "B", "C", "D", "E"])
+    parser.add_argument('--options', type=list, default=["A", "B", "C", "D", "E", "F", "G", "H"])
     parser.add_argument('--epoch', type=int, default=20)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--bs', type=int, default=16)
