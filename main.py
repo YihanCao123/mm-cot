@@ -275,9 +275,9 @@ def T5Trainer(
             "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
             "attention_mask": item["attention_mask"].unsqueeze(0).to(model.device),
             "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
-            "labels": [item["labels"]],
+            "labels": item["labels"].unsqueeze(0).to(model.device),
         }
-        for k in ["input_ids", "attention_mask", "image_ids"]:
+        for k in item_device:
             print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
         print(res)

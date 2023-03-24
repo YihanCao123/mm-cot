@@ -216,7 +216,7 @@ class ScienceQADatasetImg(Dataset):
         )
         source_ids = source["input_ids"].squeeze()
         source_mask = source["attention_mask"].squeeze()
-        target_ids = target["input_ids"].squeeze().tolist()
+        target_ids = target["input_ids"].squeeze()
 
         image_ids = torch.tensor(image_ids, dtype=torch.float32).squeeze()
         
