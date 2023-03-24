@@ -271,26 +271,31 @@ def T5Trainer(
         trainer.save_model(save_dir)
 
     model.eval()
-    storage = []
-    target_list = []
-    for item in tqdm(test_set):
-        item_device = {
-            "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
-            "attention_mask": item["attention_mask"].unsqueeze(0).to(model.device),
-            "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
-            "labels": item["labels"].unsqueeze(0).to(model.device),
-        }
-        # for k in item_device:
-        #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
-        res = model(**item_device)
-        storage.append(res.logits.argmax(axis=2).detach().cpu())
-        target_list.append(item["labels"].unsqueeze(0).detach().cpu())
-        del item_device
-        del res
-        torch.cuda.empty_cache()
-        # print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
-    my_preds = torch.cat(storage)
-    my_targets = torch.cat(target_list)
+
+    def my_predict(dataset):
+        storage = []
+        target_list = []
+        for item in tqdm(dataset):
+            item_device = {
+                "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
+                "attention_mask": item["attention_mask"].unsqueeze(0).to(model.device),
+                "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
+                "labels": item["labels"].unsqueeze(0).to(model.device),
+            }
+            # for k in item_device:
+            #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
+            res = model(**item_device)
+            storage.append(res.logits.argmax(axis=2).detach().cpu())
+            target_list.append(item["labels"].unsqueeze(0).detach().cpu())
+            del item_device
+            del res
+            torch.cuda.empty_cache()
+            # print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
+        my_preds = torch.cat(storage)
+        my_targets = torch.cat(target_list)
+        return my_preds, my_targets
+    
+    test_preds, test_targets = my_predict(test_set)
 
     # metrics = trainer.evaluate(eval_dataset=test_set)
     # trainer.log_metrics("test", metrics)
@@ -306,11 +311,13 @@ def T5Trainer(
         #     targets = predict_results.label_ids
         #     # preds = preds.argmax(axis=2)
 
+        print("tokenizer.batch_decode test_preds")
         preds = tokenizer.batch_decode(
-            my_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            test_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
+        print("tokenizer.batch_decode test_targets")
         targets = tokenizer.batch_decode(
-            my_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            test_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
 
         results_ans = {}
@@ -318,7 +325,7 @@ def T5Trainer(
         results_reference = {}
         
         num_fail = 0
-        for idx, qid in enumerate(test_qids):
+        for idx, qid in enumerate(tqdm(test_qids)):
             pred = preds[int(idx)]
             ref = targets[int(idx)]
             extract_pred = extract_ans(pred)
@@ -334,6 +341,7 @@ def T5Trainer(
             results_rationale[str(qid)] = pred
             results_reference[str(qid)] = ref
 
+        print("get_scores")
         scores = get_scores(results_ans, results_rationale, results_reference, os.path.join(args.data_root, "scienceqa/problems.json"))
         preds = [pred.strip() for pred in preds]
         output_data = {
@@ -350,6 +358,7 @@ def T5Trainer(
         # torch.cuda.empty_cache()
         # del preds, targets
         # predict_results = trainer.predict(test_dataset=eval_set, max_length=args.output_len) 
+        eval_preds, eval_targets = my_predict(eval_set)
         if trainer.is_world_process_zero():
             # if args.use_generate:
             #     preds, targets = predict_results.predictions, predict_results.label_ids
@@ -358,11 +367,13 @@ def T5Trainer(
             #     targets = predict_results.label_ids
             #     preds = preds.argmax(axis=2)
 
+            print("tokenizer.batch_decode eval_preds")
             preds = tokenizer.batch_decode(
-                my_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                eval_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
             )
+            print("tokenizer.batch_decode eval_targets")
             targets = tokenizer.batch_decode(
-                my_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                eval_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
             )
             preds = [pred.strip() for pred in preds]
             output_data = {"preds": preds,
