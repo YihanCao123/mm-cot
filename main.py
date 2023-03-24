@@ -270,6 +270,7 @@ def T5Trainer(
         trainer.train()
         trainer.save_model(save_dir)
 
+    model.eval()
     storage = []
     for item in tqdm(test_set):
         item_device = {
@@ -281,7 +282,7 @@ def T5Trainer(
         # for k in item_device:
         #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
-        storage.append(res.detach().cpu())
+        storage.append(res.logits.detach().cpu())
         del item_device
         del res
         torch.cuda.empty_cache()
