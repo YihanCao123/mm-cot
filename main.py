@@ -276,12 +276,11 @@ def T5Trainer(
 
     for item in tqdm(test_set):
         item_device = {
-            "input_ids": item["input_ids"].to(model.device),
-            "attention_mask": item["attention_mask"].to(model.device),
-            "image_ids": item["image_ids"].to(model.device),
-            "labels": item["labels"],
+            "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
+            "attention_mask": item["attention_mask"].unsqueeze(0).to(model.device),
+            "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
+            "labels": [item["labels"]],
         }
-        print(item_device)
         res = model(**item_device)
         print(res)
 
