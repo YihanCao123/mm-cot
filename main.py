@@ -18,6 +18,7 @@ console = Console(record=True)
 from torch import cuda
 import nltk
 import evaluate
+from tqdm import tqdm
 
 
 def parse_args():
@@ -69,9 +70,9 @@ def T5Trainer(
     console.log(f"[Data]: Reading data...\n")
     problems = dataframe['problems']
     qids = dataframe['qids']
-    train_qids = qids['train']
-    test_qids = qids['test']
-    val_qids = qids['val']
+    train_qids = qids['train'][:10]
+    test_qids = qids['test'][:50]
+    val_qids = qids['val'][:50]
     
     if args.evaluate_dir is not None:
         save_dir = args.evaluate_dir
@@ -272,6 +273,11 @@ def T5Trainer(
     metrics = trainer.evaluate(eval_dataset = test_set)
     trainer.log_metrics("test", metrics)
     trainer.save_metrics("test", metrics)
+
+    for item in tqdm(test_set):
+        itemk = {k:v.to(model.device) for k,v in item.items()}
+        res = model(**itemk)
+        print(res)
 
     predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
     if trainer.is_world_process_zero():
