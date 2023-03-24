@@ -275,8 +275,14 @@ def T5Trainer(
     trainer.save_metrics("test", metrics)
 
     for item in tqdm(test_set):
-        itemk = {k:v.to(model.device) for k,v in item.items()}
-        res = model(**itemk)
+        item_device = {
+            "input_ids": item["input_ids"].to(model.device),
+            "attention_mask": item["attention_mask"].to(model.device),
+            "image_ids": item["image_ids"].to(model.device),
+            "labels": item["labels"],
+        }
+        print(item_device)
+        res = model(**item_device)
         print(res)
 
     predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
