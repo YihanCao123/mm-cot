@@ -60,7 +60,6 @@ def load_data_img(args):
     print(f"number of test problems: {len(test_qids)}\n")
 
     qids = {'train': train_qids, 'val':val_qids,'test':test_qids}
-    image_features = np.float32(image_features)
     return problems, qids, name_maps, image_features
 
 class ScienceQADatasetStd(Dataset):
@@ -219,7 +218,7 @@ class ScienceQADatasetImg(Dataset):
         source_mask = source["attention_mask"].squeeze()
         target_ids = target["input_ids"].squeeze().tolist()
 
-        image_ids = torch.tensor(image_ids).squeeze()
+        image_ids = torch.tensor(image_ids, dtype=torch.float32).squeeze()
         
         return {
             "input_ids": source_ids,
