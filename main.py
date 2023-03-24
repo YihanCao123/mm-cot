@@ -71,8 +71,8 @@ def T5Trainer(
     problems = dataframe['problems']
     qids = dataframe['qids']
     train_qids = qids['train'][:10]
-    test_qids = qids['test'][:50]
-    val_qids = qids['val'][:50]
+    test_qids = qids['test']
+    val_qids = qids['val']
     
     if args.evaluate_dir is not None:
         save_dir = args.evaluate_dir
@@ -270,6 +270,7 @@ def T5Trainer(
         trainer.train()
         trainer.save_model(save_dir)
 
+    storage = []
     for item in tqdm(test_set):
         item_device = {
             "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
@@ -277,10 +278,11 @@ def T5Trainer(
             "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
             "labels": item["labels"].unsqueeze(0).to(model.device),
         }
-        for k in item_device:
-            print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
+        # for k in item_device:
+        #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
-        print(res)
+        print(res.loss.shape, res.logits.shape)
+        storage.append(res)
 
     metrics = trainer.evaluate(eval_dataset = test_set)
     trainer.log_metrics("test", metrics)
