@@ -289,8 +289,8 @@ def T5Trainer(
         del res
         torch.cuda.empty_cache()
         # print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
-    preds = torch.cat(storage)
-    targets = torch.cat(target_list)
+    my_preds = torch.cat(storage)
+    my_targets = torch.cat(target_list)
 
     # metrics = trainer.evaluate(eval_dataset=test_set)
     # trainer.log_metrics("test", metrics)
@@ -307,10 +307,10 @@ def T5Trainer(
         #     # preds = preds.argmax(axis=2)
 
         preds = tokenizer.batch_decode(
-            preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            my_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
         targets = tokenizer.batch_decode(
-            targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            my_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )
 
         results_ans = {}
@@ -359,10 +359,10 @@ def T5Trainer(
             #     preds = preds.argmax(axis=2)
 
             preds = tokenizer.batch_decode(
-                preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                my_preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
             )
             targets = tokenizer.batch_decode(
-                targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                my_targets, skip_special_tokens=True, clean_up_tokenization_spaces=True
             )
             preds = [pred.strip() for pred in preds]
             output_data = {"preds": preds,
