@@ -71,8 +71,8 @@ def T5Trainer(
     problems = dataframe['problems']
     qids = dataframe['qids']
     train_qids = qids['train'][:10]
-    test_qids = qids['test']
-    val_qids = qids['val']
+    test_qids = qids['test'][:50]
+    val_qids = qids['val'][:50]
     
     if args.evaluate_dir is not None:
         save_dir = args.evaluate_dir
@@ -272,6 +272,7 @@ def T5Trainer(
 
     model.eval()
     storage = []
+    target_list = []
     for item in tqdm(test_set):
         item_device = {
             "input_ids": item["input_ids"].unsqueeze(0).to(model.device),
@@ -283,23 +284,27 @@ def T5Trainer(
         #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
         storage.append(res.logits.argmax(axis=2).detach().cpu())
+        target_list.append(item["labels"].unsqueeze(0).detach().cpu())
         del item_device
         del res
         torch.cuda.empty_cache()
-        print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
+        # print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
+    preds = torch.cat(storage)
+    targets = torch.cat(target_list)
 
-    metrics = trainer.evaluate(eval_dataset = test_set)
-    trainer.log_metrics("test", metrics)
-    trainer.save_metrics("test", metrics)
+    # metrics = trainer.evaluate(eval_dataset=test_set)
+    # trainer.log_metrics("test", metrics)
+    # trainer.save_metrics("test", metrics)
 
-    predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
+    # predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
     if trainer.is_world_process_zero():
-        if args.use_generate:
-            preds, targets = predict_results.predictions, predict_results.label_ids
-        else:
-            preds = predict_results.predictions[0]
-            targets = predict_results.label_ids
-            preds = preds.argmax(axis=2)
+        # if args.use_generate:
+        #     raise NotImplementedError
+        #     preds, targets = predict_results.predictions, predict_results.label_ids
+        # else:
+        #     # preds = predict_results.predictions[0]
+        #     targets = predict_results.label_ids
+        #     # preds = preds.argmax(axis=2)
 
         preds = tokenizer.batch_decode(
             preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
@@ -336,22 +341,22 @@ def T5Trainer(
                 "scores": scores,
                 "preds": preds,
                  "labels": targets}
-        output_prediction_file = os.path.join(save_dir,"predictions_ans_test.json")
+        output_prediction_file = os.path.join(save_dir, "predictions_ans_test.json")
         with open(output_prediction_file, "w") as writer:
             writer.write(json.dumps(output_data, indent=4))
     
     # generate the rationale for the eval set
     if args.prompt_format == "QCM-LE":
-        torch.cuda.empty_cache()
-        del predict_results, preds, targets
-        predict_results = trainer.predict(test_dataset=eval_set, max_length=args.output_len) 
+        # torch.cuda.empty_cache()
+        # del preds, targets
+        # predict_results = trainer.predict(test_dataset=eval_set, max_length=args.output_len) 
         if trainer.is_world_process_zero():
-            if args.use_generate:
-                preds, targets = predict_results.predictions, predict_results.label_ids
-            else:
-                preds = predict_results.predictions[0]
-                targets = predict_results.label_ids
-                preds = preds.argmax(axis=2)
+            # if args.use_generate:
+            #     preds, targets = predict_results.predictions, predict_results.label_ids
+            # else:
+            #     preds = predict_results.predictions[0]
+            #     targets = predict_results.label_ids
+            #     preds = preds.argmax(axis=2)
 
             preds = tokenizer.batch_decode(
                 preds, skip_special_tokens=True, clean_up_tokenization_spaces=True
@@ -362,7 +367,7 @@ def T5Trainer(
             preds = [pred.strip() for pred in preds]
             output_data = {"preds": preds,
                  "labels": targets}
-            output_prediction_file = os.path.join(save_dir,"predictions_ans_eval.json")
+            output_prediction_file = os.path.join(save_dir, "predictions_ans_eval.json")
             with open(output_prediction_file, "w") as writer:
                 writer.write(json.dumps(output_data, indent=4))
     
