@@ -60,6 +60,7 @@ def load_data_img(args):
     print(f"number of test problems: {len(test_qids)}\n")
 
     qids = {'train': train_qids, 'val':val_qids,'test':test_qids}
+    image_features = np.float32(image_features)
     return problems, qids, name_maps, image_features
 
 class ScienceQADatasetStd(Dataset):
