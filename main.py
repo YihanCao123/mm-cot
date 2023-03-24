@@ -282,13 +282,11 @@ def T5Trainer(
         # for k in item_device:
         #     print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
-        storage.append(res.logits.detach().cpu())
+        storage.append(res.logits.argmax(axis=2).detach().cpu())
         del item_device
         del res
         torch.cuda.empty_cache()
         print(storage[-1].shape, [(v.shape, v.dtype, v.device) for k, v in item.items()])
-        import os
-        os.abort()
 
     metrics = trainer.evaluate(eval_dataset = test_set)
     trainer.log_metrics("test", metrics)
