@@ -269,10 +269,6 @@ def T5Trainer(
     if args.evaluate_dir is None:
         trainer.train()
         trainer.save_model(save_dir)
-        
-    metrics = trainer.evaluate(eval_dataset = test_set)
-    trainer.log_metrics("test", metrics)
-    trainer.save_metrics("test", metrics)
 
     for item in tqdm(test_set):
         item_device = {
@@ -281,8 +277,14 @@ def T5Trainer(
             "image_ids": item["image_ids"].unsqueeze(0).to(model.device),
             "labels": [item["labels"]],
         }
+        for k in ["input_ids", "attention_mask", "image_ids"]:
+            print(k, item_device[k].device, item_device[k].shape, item_device[k].dtype)
         res = model(**item_device)
         print(res)
+
+    metrics = trainer.evaluate(eval_dataset = test_set)
+    trainer.log_metrics("test", metrics)
+    trainer.save_metrics("test", metrics)
 
     predict_results = trainer.predict(test_dataset=test_set, max_length=args.output_len) 
     if trainer.is_world_process_zero():
