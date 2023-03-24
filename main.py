@@ -71,8 +71,8 @@ def T5Trainer(
     problems = dataframe['problems']
     qids = dataframe['qids']
     train_qids = qids['train'][:10]
-    test_qids = qids['test'][:50]
-    val_qids = qids['val'][:50]
+    test_qids = qids['test']
+    val_qids = qids['val']
     
     if args.evaluate_dir is not None:
         save_dir = args.evaluate_dir
