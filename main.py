@@ -225,6 +225,7 @@ def T5Trainer(
             logging_strategy="steps",
             save_strategy="epoch",
             save_total_limit = 2,
+            logging_steps=1,
             learning_rate= args.lr,
             eval_accumulation_steps=args.eval_acc,
             per_device_train_batch_size=args.bs,

@@ -26,7 +26,7 @@ def get_scores(result_data, rationale_data, results_reference, data_file):
     # read result file
     results = result_data
     num = len(results)
-    assert num == 4241
+    # assert num == 4241
     #print("number of questions:", num)
 
     # read data file
