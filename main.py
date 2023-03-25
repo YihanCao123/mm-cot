@@ -223,18 +223,20 @@ def T5Trainer(
             do_eval=False,
             evaluation_strategy="no",
             logging_strategy="steps",
-            save_strategy="epoch",
-            save_total_limit = 2,
+            save_strategy="steps",
+            save_total_limit=2,
             logging_steps=1,
-            learning_rate= args.lr,
+            save_steps=5,
+            learning_rate=args.lr,
             eval_accumulation_steps=args.eval_acc,
             per_device_train_batch_size=args.bs,
             per_device_eval_batch_size=args.eval_bs,
-            weight_decay=0.01,
+            weight_decay=1e-5,
             num_train_epochs=args.epoch,
             predict_with_generate=args.use_generate,
             report_to="none",
         )
+        print(training_args)
     # evaluate at each epoch
     else:
         training_args = Seq2SeqTrainingArguments(
