@@ -70,7 +70,7 @@ def T5Trainer(
     console.log(f"[Data]: Reading data...\n")
     problems = dataframe['problems']
     qids = dataframe['qids']
-    train_qids = qids['train'][:10]
+    train_qids = qids['train']
     test_qids = qids['test']
     val_qids = qids['val']
     
